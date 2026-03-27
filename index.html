@@ -1293,15 +1293,35 @@ function sendEmail(){
   const biz=db.settings;
   if(!client.email){alert('This client has no email address.');return;}
   const subj=`${type==='estimate'?'Estimate':'Invoice'} #${doc.number} from ${biz.name||'Us'}`;
-  const itemLines=doc.items.map(i=>`  ${i.desc}: ${i.qty} x ${fmt(i.rate)} = ${fmt(i.amount)}`).join('\n');
-  const body=`Hi ${client.name},\n\nPlease see your ${type} details below:\n\n${type.toUpperCase()} #${doc.number}\nDate: ${fmtD(doc.date)}\n`
-    +(type==='invoice'&&doc.dueDate?`Due: ${fmtD(doc.dueDate)}\n`:'')
-    +`\nItems:\n${itemLines}\n\nSubtotal: ${fmt(doc.subtotal)}`
-    +(doc.tax?`\nTax (${doc.tax}%): ${fmt(doc.subtotal*doc.tax/100)}`:'')
-    +`\nTotal: ${fmt(doc.total)}\n\n`
-    +(doc.notes?`Notes: ${doc.notes}\n\n`:'')
-    +`Please don't hesitate to reach out with any questions.\n\nBest regards,\n${biz.name||'Your Business'}`
-    +(biz.phone?`\n${biz.phone}`:'')+(biz.email?`\n${biz.email}`:'');
+  const itemRows=doc.items.map(i=>`<tr><td style="padding:8px 12px;border-bottom:1px solid #eee">${i.desc}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center">${i.qty}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right">${fmt(i.rate)}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right">${fmt(i.amount)}</td></tr>`).join('');
+  const logoUrl='https://raw.githubusercontent.com/jponsky2/bookkeeper/main/logo.png';
+  const body=`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#0D1F35">
+  <div style="background:#12243A;padding:24px 32px;border-radius:8px 8px 0 0;text-align:left">
+    <img src="${logoUrl}" style="height:50px;width:auto;object-fit:contain" alt="${biz.name||'Eleven Outdoors'}">
+  </div>
+  <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
+    <p style="margin-bottom:16px">Hi ${client.name},</p>
+    <p style="margin-bottom:24px">Please see your ${type} details below.</p>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+      <tr style="background:#f8fafc"><td style="padding:8px 12px;font-weight:600">${type==='estimate'?'ESTIMATE':'INVOICE'} #${doc.number}</td><td style="padding:8px 12px;text-align:right">Date: ${fmtD(doc.date)}</td></tr>
+      ${type==='invoice'&&doc.dueDate?`<tr><td colspan="2" style="padding:4px 12px;color:#D97706">Due: ${fmtD(doc.dueDate)}</td></tr>`:''}
+    </table>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+      <thead><tr style="background:#f1f5f9"><th style="padding:8px 12px;text-align:left">Description</th><th style="padding:8px 12px;text-align:center">Qty</th><th style="padding:8px 12px;text-align:right">Rate</th><th style="padding:8px 12px;text-align:right">Amount</th></tr></thead>
+      <tbody>${itemRows}</tbody>
+    </table>
+    <div style="text-align:right;margin-bottom:24px">
+      <div style="margin-bottom:4px">Subtotal: ${fmt(doc.subtotal)}</div>
+      ${doc.tax?`<div style="margin-bottom:4px">Tax (${doc.tax}%): ${fmt(doc.subtotal*doc.tax/100)}</div>`:''}
+      <div style="font-size:18px;font-weight:700;color:#2563EB">Total: ${fmt(doc.total)}</div>
+    </div>
+    ${doc.notes?`<div style="background:#f8fafc;padding:12px;border-radius:6px;margin-bottom:24px"><strong>Notes:</strong> ${doc.notes}</div>`:''}
+    <p style="color:#6B80A0;font-size:13px">Please don't hesitate to reach out with any questions.</p>
+    <p style="margin-top:16px;font-weight:600">${biz.name||'Eleven Outdoors'}</p>
+    ${biz.phone?`<p style="color:#6B80A0;font-size:13px">${biz.phone}</p>`:''}
+    ${biz.email?`<p style="color:#6B80A0;font-size:13px">${biz.email}</p>`:''}
+  </div>
+</div>`;
   const btn=$('doc-email-btn');
   const orig=btn.textContent;
   btn.textContent='Sending…';btn.disabled=true;

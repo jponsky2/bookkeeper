@@ -1293,33 +1293,88 @@ function sendEmail(){
   const biz=db.settings;
   if(!client.email){alert('This client has no email address.');return;}
   const subj=`${type==='estimate'?'Estimate':'Invoice'} #${doc.number} from ${biz.name||'Us'}`;
-  const itemRows=doc.items.map(i=>`<tr><td style="padding:8px 12px;border-bottom:1px solid #eee">${i.desc}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center">${i.qty}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right">${fmt(i.rate)}</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right">${fmt(i.amount)}</td></tr>`).join('');
   const logoUrl='https://raw.githubusercontent.com/jponsky2/bookkeeper/main/logo.png';
-  const body=`<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#0D1F35">
-  <div style="background:#12243A;padding:24px 32px;border-radius:8px 8px 0 0;text-align:left">
-    <img src="${logoUrl}" style="height:50px;width:auto;object-fit:contain" alt="${biz.name||'Eleven Outdoors'}">
+  const docLabel=type==='estimate'?'ESTIMATE':'INVOICE';
+  const statusColor=doc.status==='paid'?'#059669':doc.status==='sent'?'#2563EB':'#D97706';
+  const statusLabel=doc.status?doc.status.charAt(0).toUpperCase()+doc.status.slice(1):'Unpaid';
+  const itemRows=doc.items.map(i=>`
+    <tr>
+      <td style="padding:12px 16px;border-bottom:1px solid #eee;color:#0D1F35">${i.desc}</td>
+      <td style="padding:12px 16px;border-bottom:1px solid #eee;text-align:center;color:#6B80A0">${i.qty}</td>
+      <td style="padding:12px 16px;border-bottom:1px solid #eee;text-align:right;color:#6B80A0">${fmt(i.rate)}</td>
+      <td style="padding:12px 16px;border-bottom:1px solid #eee;text-align:right;font-weight:700">${fmt(i.amount)}</td>
+    </tr>`).join('');
+  const body=`<div style="font-family:Arial,sans-serif;max-width:640px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;color:#0D1F35">
+  <!-- Header -->
+  <div style="padding:28px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee">
+    <table width="100%"><tr>
+      <td style="vertical-align:middle">
+        <img src="${logoUrl}" style="height:52px;width:auto" alt="${biz.name||'Eleven Outdoors'}">
+        <div style="font-size:16px;font-weight:700;margin-top:6px">${biz.name||'Eleven Outdoors'}</div>
+      </td>
+      <td style="vertical-align:middle;text-align:right">
+        <div style="font-size:32px;font-weight:900;color:#2563EB;letter-spacing:2px">${docLabel}</div>
+        <div style="color:#6B80A0;font-size:14px;margin-top:4px">#${doc.number}</div>
+      </td>
+    </tr></table>
   </div>
-  <div style="background:#fff;padding:32px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px">
-    <p style="margin-bottom:16px">Hi ${client.name},</p>
-    <p style="margin-bottom:24px">Please see your ${type} details below.</p>
-    <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
-      <tr style="background:#f8fafc"><td style="padding:8px 12px;font-weight:600">${type==='estimate'?'ESTIMATE':'INVOICE'} #${doc.number}</td><td style="padding:8px 12px;text-align:right">Date: ${fmtD(doc.date)}</td></tr>
-      ${type==='invoice'&&doc.dueDate?`<tr><td colspan="2" style="padding:4px 12px;color:#D97706">Due: ${fmtD(doc.dueDate)}</td></tr>`:''}
-    </table>
-    <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
-      <thead><tr style="background:#f1f5f9"><th style="padding:8px 12px;text-align:left">Description</th><th style="padding:8px 12px;text-align:center">Qty</th><th style="padding:8px 12px;text-align:right">Rate</th><th style="padding:8px 12px;text-align:right">Amount</th></tr></thead>
+  <!-- Date / Status row -->
+  <div style="padding:16px 32px;background:#f8fafc;border-bottom:1px solid #eee">
+    <table width="100%"><tr>
+      <td style="color:#6B80A0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px">DATE<br><span style="font-size:15px;font-weight:600;color:#0D1F35;letter-spacing:0">${fmtD(doc.date)}</span></td>
+      ${doc.dueDate?`<td style="color:#6B80A0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px">DUE DATE<br><span style="font-size:15px;font-weight:600;color:#0D1F35;letter-spacing:0">${fmtD(doc.dueDate)}</span></td>`:''}
+      <td style="color:#6B80A0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px">STATUS<br><span style="display:inline-block;margin-top:4px;padding:3px 12px;border-radius:20px;background:#FFF8E7;color:${statusColor};font-size:13px;font-weight:600;letter-spacing:0">${statusLabel}</span></td>
+    </tr></table>
+  </div>
+  <!-- From / Bill To -->
+  <div style="padding:24px 32px;border-bottom:1px solid #eee;background:#f8fafc">
+    <table width="100%"><tr>
+      <td style="width:50%;vertical-align:top">
+        <div style="font-size:11px;font-weight:700;color:#6B80A0;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">FROM</div>
+        <div style="font-weight:700">${biz.name||'Eleven Outdoors'}</div>
+        ${biz.address?`<div style="color:#6B80A0;font-size:13px">${biz.address}</div>`:''}
+        ${biz.phone?`<div style="color:#6B80A0;font-size:13px">${biz.phone}</div>`:''}
+        ${biz.email?`<div style="color:#6B80A0;font-size:13px">${biz.email}</div>`:''}
+      </td>
+      <td style="width:50%;vertical-align:top">
+        <div style="font-size:11px;font-weight:700;color:#6B80A0;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">BILL TO</div>
+        <div style="font-weight:700">${client.name}</div>
+        ${client.address?`<div style="color:#6B80A0;font-size:13px">${client.address}</div>`:''}
+        ${client.phone?`<div style="color:#6B80A0;font-size:13px">${client.phone}</div>`:''}
+        ${client.email?`<div style="color:#6B80A0;font-size:13px">${client.email}</div>`:''}
+      </td>
+    </tr></table>
+  </div>
+  <!-- Items table -->
+  <div style="padding:0 32px">
+    <table width="100%" style="border-collapse:collapse">
+      <thead>
+        <tr style="background:#f1f5f9">
+          <th style="padding:10px 16px;text-align:left;font-size:11px;font-weight:700;color:#6B80A0;text-transform:uppercase;letter-spacing:1px">DESCRIPTION</th>
+          <th style="padding:10px 16px;text-align:center;font-size:11px;font-weight:700;color:#6B80A0;text-transform:uppercase;letter-spacing:1px">QTY</th>
+          <th style="padding:10px 16px;text-align:right;font-size:11px;font-weight:700;color:#6B80A0;text-transform:uppercase;letter-spacing:1px">UNIT PRICE</th>
+          <th style="padding:10px 16px;text-align:right;font-size:11px;font-weight:700;color:#6B80A0;text-transform:uppercase;letter-spacing:1px">AMOUNT</th>
+        </tr>
+      </thead>
       <tbody>${itemRows}</tbody>
     </table>
-    <div style="text-align:right;margin-bottom:24px">
-      <div style="margin-bottom:4px">Subtotal: ${fmt(doc.subtotal)}</div>
-      ${doc.tax?`<div style="margin-bottom:4px">Tax (${doc.tax}%): ${fmt(doc.subtotal*doc.tax/100)}</div>`:''}
-      <div style="font-size:18px;font-weight:700;color:#2563EB">Total: ${fmt(doc.total)}</div>
+  </div>
+  <!-- Totals -->
+  <div style="padding:16px 32px 24px;text-align:right">
+    <div style="display:inline-block;min-width:200px">
+      <div style="display:flex;justify-content:space-between;padding:6px 0;color:#6B80A0">
+        <span>Subtotal</span><span>${fmt(doc.subtotal)}</span>
+      </div>
+      ${doc.tax?`<div style="display:flex;justify-content:space-between;padding:6px 0;color:#6B80A0"><span>Tax (${doc.tax}%)</span><span>${fmt(doc.subtotal*doc.tax/100)}</span></div>`:''}
+      <div style="border-top:2px solid #0D1F35;margin-top:4px;padding-top:8px;display:flex;justify-content:space-between;font-size:18px;font-weight:700">
+        <span>Total</span><span style="color:#2563EB">${fmt(doc.total)}</span>
+      </div>
     </div>
-    ${doc.notes?`<div style="background:#f8fafc;padding:12px;border-radius:6px;margin-bottom:24px"><strong>Notes:</strong> ${doc.notes}</div>`:''}
-    <p style="color:#6B80A0;font-size:13px">Please don't hesitate to reach out with any questions.</p>
-    <p style="margin-top:16px;font-weight:600">${biz.name||'Eleven Outdoors'}</p>
-    ${biz.phone?`<p style="color:#6B80A0;font-size:13px">${biz.phone}</p>`:''}
-    ${biz.email?`<p style="color:#6B80A0;font-size:13px">${biz.email}</p>`:''}
+  </div>
+  ${doc.notes?`<div style="padding:0 32px 24px"><div style="background:#f8fafc;padding:14px 16px;border-radius:8px;font-size:13px"><strong>Notes:</strong> ${doc.notes}</div></div>`:''}
+  <!-- Footer -->
+  <div style="background:#f8fafc;padding:16px 32px;border-top:1px solid #eee;font-size:12px;color:#6B80A0;text-align:center">
+    Questions? Contact us at ${biz.email||'elevenoutdoors11@gmail.com'}${biz.phone?' · '+biz.phone:''}
   </div>
 </div>`;
   const btn=$('doc-email-btn');

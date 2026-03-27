@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BookKeeper Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init('1D1qvQFnQh4BfZXEl');</script>
 <style>
 :root {
   --sidebar: #12243A;
@@ -1300,8 +1302,24 @@ function sendEmail(){
     +(doc.notes?`Notes: ${doc.notes}\n\n`:'')
     +`Please don't hesitate to reach out with any questions.\n\nBest regards,\n${biz.name||'Your Business'}`
     +(biz.phone?`\n${biz.phone}`:'')+(biz.email?`\n${biz.email}`:'');
-  window.open(`mailto:${client.email}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`);
-  if(type==='estimate'){const e=db.estimates.find(x=>x.id===doc.id);if(e&&e.status==='draft'){e.status='sent';dbSave();renderEsts();}}
+  const btn=$('doc-email-btn');
+  const orig=btn.textContent;
+  btn.textContent='Sending…';btn.disabled=true;
+  emailjs.send('service_806i9ik','template_pi7032i',{
+    to_email:client.email,
+    subject:subj,
+    message:body,
+    name:biz.name||'Eleven Outdoors',
+    email:biz.email||''
+  }).then(()=>{
+    btn.textContent='Sent!';
+    if(type==='estimate'){const e=db.estimates.find(x=>x.id===doc.id);if(e&&e.status==='draft'){e.status='sent';dbSave();renderEsts();}}
+    setTimeout(()=>{btn.textContent=orig;btn.disabled=false;},2000);
+  }).catch(err=>{
+    console.error(err);
+    alert('Failed to send email. Check your EmailJS settings.\n\n'+JSON.stringify(err));
+    btn.textContent=orig;btn.disabled=false;
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════

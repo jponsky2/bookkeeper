@@ -268,6 +268,33 @@ textarea.fc{resize:vertical;min-height:70px;}
 .cal-ev-type{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;}
 .cal-empty{text-align:center;padding:28px 12px;color:var(--muted);font-size:13px;}
 
+/* ─── REPORTS ─── */
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+.report-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px;}
+.pl-table th,.pl-table td{padding:9px 14px;font-size:13px;}
+.pl-table tr.pl-total td{font-weight:700;border-top:2px solid var(--border);background:var(--bg);}
+.pl-bar{height:8px;border-radius:4px;min-width:4px;}
+.client-rev-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.client-rev-row:last-child{border-bottom:none;}
+.report-period{display:flex;gap:8px;margin-bottom:18px;align-items:center;}
+
+/* ─── TIME TRACKING ─── */
+.time-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:18px;}
+.timer-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.timer-badge.billable{background:#EFF6FF;color:#1D4ED8;}
+.timer-badge.unbillable{background:#F1F5F9;color:#64748B;}
+.time-select-row{display:flex;align-items:center;gap:8px;}
+
+/* ─── RECURRING ─── */
+.rec-badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.rec-badge.active{background:#DCFCE7;color:#15803D;}
+.rec-badge.paused{background:#F1F5F9;color:#64748B;}
+
+/* ─── LOGO PREVIEW ─── */
+.logo-preview{max-height:60px;max-width:180px;object-fit:contain;border-radius:6px;}
+.logo-upload-area{border:2px dashed var(--border);border-radius:var(--r);padding:16px;text-align:center;cursor:pointer;transition:border-color 0.15s;}
+.logo-upload-area:hover{border-color:var(--primary);}
+
 /* ─── PAYMENT TOGGLE & INLINE PRICE ─── */
 .pay-toggle{padding:5px 12px;border-radius:20px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;transition:all 0.15s;white-space:nowrap;}
 .pay-toggle.unpaid{background:var(--warn-bg);color:var(--warn);border:1.5px solid #FCD34D;}
@@ -311,11 +338,9 @@ a:hover{text-decoration:underline;}
 <!-- ══════════════ SIDEBAR ══════════════ -->
 <aside class="sidebar">
   <div class="sb-brand">
-    <div class="sb-logo-mark">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-    </div>
+    <img src="./logo.png" alt="Eleven Outdoors" style="height:38px;width:auto;object-fit:contain;filter:brightness(0) invert(1);opacity:0.92">
     <div>
-      <div class="sb-brand-text">BookKeeper</div>
+      <div class="sb-brand-text">Eleven Outdoors</div>
       <div class="sb-brand-sub">Business Manager</div>
     </div>
   </div>
@@ -353,6 +378,14 @@ a:hover{text-decoration:underline;}
 
   <div class="sb-section">
     <div class="sb-section-label">Finance</div>
+    <button class="nav-item" data-section="reports">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Reports
+    </button>
+    <button class="nav-item" data-section="time">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Time Tracking
+    </button>
     <button class="nav-item" data-section="expenses">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
       Expenses
@@ -430,13 +463,21 @@ a:hover{text-decoration:underline;}
 
     <!-- ── INVOICES ── -->
     <section id="invoices">
-      <div class="card">
+      <div class="card" id="inv-main-card">
         <div class="filter-bar" id="inv-filter-bar"></div>
-        <div class="tbl-wrap">
+        <div class="tbl-wrap" id="inv-table-wrap">
           <table>
             <thead><tr><th>Number</th><th>Client</th><th>Issued</th><th>Due</th><th>Amount</th><th>Payment</th><th></th></tr></thead>
             <tbody id="inv-tbody"></tbody>
           </table>
+        </div>
+        <div id="rec-inv-wrap" style="display:none">
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Client</th><th>Amount</th><th>Frequency</th><th>Next Due</th><th>Status</th><th></th></tr></thead>
+              <tbody id="rec-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
     </section>
@@ -474,6 +515,53 @@ a:hover{text-decoration:underline;}
           <table>
             <thead><tr><th>Date</th><th>Worker</th><th>Amount</th><th>Method</th><th>Description</th><th></th></tr></thead>
             <tbody id="pay-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── REPORTS ── -->
+    <section id="reports">
+      <div class="report-period">
+        <label class="lbl" style="margin:0;white-space:nowrap">Year:</label>
+        <select class="fc" id="rpt-year" style="width:100px" onchange="renderReports()"></select>
+        <button class="btn btn-ghost btn-sm" onclick="window.print()">Export / Print</button>
+      </div>
+      <div class="report-grid-3" id="rpt-top-stats"></div>
+      <div class="report-grid">
+        <div class="card">
+          <div class="card-head"><span class="card-title">Profit & Loss by Month</span></div>
+          <div class="tbl-wrap"><table class="pl-table" id="rpt-pl-table"></table></div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:18px">
+            <div class="card-head"><span class="card-title">Revenue by Client</span></div>
+            <div style="padding:6px 18px 14px" id="rpt-clients"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><span class="card-title">Expenses by Category</span></div>
+            <div style="padding:6px 18px 14px" id="rpt-exp-cats"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Tax Collected Summary</span></div>
+        <div style="padding:16px 18px" id="rpt-tax"></div>
+      </div>
+    </section>
+
+    <!-- ── TIME TRACKING ── -->
+    <section id="time">
+      <div class="time-stats" id="time-stats"></div>
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Time Entries</span>
+          <div style="display:flex;gap:8px" id="time-bill-actions"></div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th><input type="checkbox" id="time-check-all" onchange="timeToggleAll(this.checked)"></th><th>Date</th><th>Client</th><th>Description</th><th>Hours</th><th>Rate</th><th>Amount</th><th>Billable</th><th></th></tr></thead>
+            <tbody id="time-tbody"></tbody>
           </table>
         </div>
       </div>
@@ -690,11 +778,51 @@ a:hover{text-decoration:underline;}
   </div>
 </div>
 
+<!-- TIME ENTRY -->
+<div class="overlay" id="m-time">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-hd-title" id="m-time-title">Log Time</span><button class="modal-x" onclick="closeM('m-time')">×</button></div>
+    <div class="modal-bd">
+      <input type="hidden" id="f-tid">
+      <div class="fr"><div class="fg"><label class="lbl">Date *</label><input type="date" class="fc" id="f-tdate"></div><div class="fg"><label class="lbl">Client</label><select class="fc" id="f-tclient"><option value="">No client</option></select></div></div>
+      <div class="fg"><label class="lbl">Description *</label><input type="text" class="fc" id="f-tdesc" placeholder="What did you work on?"></div>
+      <div class="fr"><div class="fg"><label class="lbl">Hours *</label><input type="number" class="fc" id="f-thours" placeholder="1.5" step="0.25" min="0"></div><div class="fg"><label class="lbl">Hourly Rate ($)</label><input type="number" class="fc" id="f-trate" placeholder="75.00" step="0.01" min="0"></div></div>
+      <div class="fg"><label class="lbl">Billable?</label><select class="fc" id="f-tbillable"><option value="1">Yes — Billable</option><option value="0">No — Internal</option></select></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeM('m-time')">Cancel</button><button class="btn btn-primary" onclick="saveTime()">Save Entry</button></div>
+  </div>
+</div>
+
+<!-- RECURRING INVOICE -->
+<div class="overlay" id="m-rec">
+  <div class="modal">
+    <div class="modal-hd"><span class="modal-hd-title" id="m-rec-title">New Recurring Invoice</span><button class="modal-x" onclick="closeM('m-rec')">×</button></div>
+    <div class="modal-bd">
+      <input type="hidden" id="f-rid">
+      <div class="fr"><div class="fg"><label class="lbl">Client *</label><select class="fc" id="f-rclient"><option value="">Select client…</option></select></div><div class="fg"><label class="lbl">Amount ($) *</label><input type="number" class="fc" id="f-ramt" placeholder="0.00" step="0.01" min="0"></div></div>
+      <div class="fr"><div class="fg"><label class="lbl">Frequency *</label><select class="fc" id="f-rfreq"><option value="weekly">Weekly</option><option value="biweekly">Every 2 Weeks</option><option value="monthly" selected>Monthly</option><option value="quarterly">Quarterly</option><option value="annually">Annually</option></select></div><div class="fg"><label class="lbl">Next Due Date *</label><input type="date" class="fc" id="f-rnext"></div></div>
+      <div class="fg"><label class="lbl">Description / Services</label><textarea class="fc" id="f-rdesc" placeholder="Monthly landscaping maintenance…"></textarea></div>
+    </div>
+    <div class="modal-ft"><button class="btn btn-ghost" onclick="closeM('m-rec')">Cancel</button><button class="btn btn-primary" onclick="saveRec()">Save</button></div>
+  </div>
+</div>
+
 <!-- SETTINGS -->
 <div class="overlay" id="m-settings">
   <div class="modal">
     <div class="modal-hd"><span class="modal-hd-title">Business Settings</span><button class="modal-x" onclick="closeM('m-settings')">×</button></div>
     <div class="modal-bd">
+      <div class="fg">
+        <label class="lbl">Company Logo</label>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px">
+          <img id="s-logo-preview" src="./logo.png" class="logo-preview" onerror="this.style.display='none'">
+          <div>
+            <input type="file" id="s-logo-file" accept="image/*" style="display:none" onchange="handleLogoUpload(this)">
+            <button class="btn btn-ghost btn-sm" onclick="$('s-logo-file').click()">Change Logo</button>
+            <button class="btn btn-sm" style="background:var(--danger-bg);color:var(--danger);border:none;cursor:pointer;margin-left:6px" onclick="clearLogo()">Remove</button>
+          </div>
+        </div>
+      </div>
       <div class="fg"><label class="lbl">Business Name</label><input type="text" class="fc" id="s-name" placeholder="Your Business Name"></div>
       <div class="fr"><div class="fg"><label class="lbl">Email</label><input type="email" class="fc" id="s-email" placeholder="you@business.com"></div><div class="fg"><label class="lbl">Phone</label><input type="tel" class="fc" id="s-phone" placeholder="(555) 000-0000"></div></div>
       <div class="fg"><label class="lbl">Address</label><input type="text" class="fc" id="s-addr" placeholder="123 Main St, City, State ZIP"></div>
@@ -709,9 +837,9 @@ a:hover{text-decoration:underline;}
 // DATABASE
 // ═══════════════════════════════════════════════════════════════
 let db = {
-  clients:[], estimates:[], invoices:[], expenses:[], workers:[], payments:[], events:[],
-  settings:{name:'',email:'',phone:'',address:'',website:'',license:''},
-  seq:{c:1,e:1,i:1,x:1,w:1,p:1,ev:1}
+  clients:[], estimates:[], invoices:[], expenses:[], workers:[], payments:[], events:[], timeEntries:[], recurring:[],
+  settings:{name:'Eleven Outdoors',email:'',phone:'',address:'',website:'',license:'',logo:'./logo.png'},
+  seq:{c:1,e:1,i:1,x:1,w:1,p:1,ev:1,t:1,r:1}
 };
 let _doc = null;
 let _expCat = 'All';
@@ -749,9 +877,11 @@ const tbActions = {
   invoices:`<button class="btn btn-primary btn-sm" onclick="openInvModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Invoice</button>`,
   expenses:`<button class="btn btn-primary btn-sm" onclick="openExpModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Expense</button>`,
   workers:`<button class="btn btn-ghost btn-sm" onclick="openPayModal()">Log Payment</button><button class="btn btn-primary btn-sm" onclick="openWkrModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Worker</button>`,
-  calendar:`<button class="btn btn-primary btn-sm" onclick="openEventModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Event</button>`
+  calendar:`<button class="btn btn-primary btn-sm" onclick="openEventModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Event</button>`,
+  time:`<button class="btn btn-primary btn-sm" onclick="openTimeModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Log Time</button>`,
+  reports:''
 };
-const tbTitles = {dashboard:'Dashboard',clients:'Clients',estimates:'Estimates',invoices:'Invoices',expenses:'Expenses',workers:'Workers & Payroll',calendar:'Calendar'};
+const tbTitles = {dashboard:'Dashboard',clients:'Clients',estimates:'Estimates',invoices:'Invoices',expenses:'Expenses',workers:'Workers & Payroll',calendar:'Calendar',time:'Time Tracking',reports:'Reports'};
 
 function showSection(name){
   document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
@@ -760,7 +890,7 @@ function showSection(name){
   document.querySelector(`.nav-item[data-section="${name}"]`)?.classList.add('active');
   $('tb-title').textContent=tbTitles[name]||name;
   $('tb-actions').innerHTML=tbActions[name]||'';
-  const renders={dashboard:renderDash,clients:renderClients,estimates:renderEsts,invoices:renderInvs,expenses:renderExps,workers:renderWkrs,calendar:renderCal};
+  const renders={dashboard:renderDash,clients:renderClients,estimates:renderEsts,invoices:renderInvs,expenses:renderExps,workers:renderWkrs,calendar:renderCal,time:renderTime,reports:renderReports};
   if(renders[name])renders[name]();
 }
 
@@ -1057,11 +1187,15 @@ function renderInvs(){
     {key:'unpaid',label:'Unpaid',fn:()=>all.filter(i=>i.status!=='paid'&&!isOD(i))},
     {key:'overdue',label:'Overdue',fn:()=>all.filter(isOD)},
     {key:'paid',label:'Paid',fn:()=>all.filter(i=>i.status==='paid')},
+    {key:'recurring',label:'Recurring',fn:()=>[]},
   ];
   $('inv-filter-bar').innerHTML=tabs.map(t=>`
     <button class="ftab${_invTab===t.key?' active':''}" onclick="_invTab='${t.key}';renderInvs()">
-      ${t.label}<span class="ftab-count">${t.fn().length}</span>
+      ${t.label}<span class="ftab-count">${t.key==='recurring'?(db.recurring||[]).length:t.fn().length}</span>
     </button>`).join('');
+  $('inv-table-wrap').style.display=_invTab==='recurring'?'none':'';
+  $('rec-inv-wrap').style.display=_invTab==='recurring'?'':'none';
+  if(_invTab==='recurring'){renderRecurring();return;}
 
   const list=tabs.find(t=>t.key===_invTab)?.fn()||all;
   const tb=$('inv-tbody');
@@ -1116,9 +1250,13 @@ function viewDoc(type,id){
     <td style="text-align:right"><strong>${fmt(i.amount)}</strong></td>
   </tr>`).join('');
 
+  const logoSrc=biz.logo||'./logo.png';
   $('m-doc-body').innerHTML=`<div class="doc-paper">
     <div class="doc-top">
-      <div><div class="doc-biz-name">${biz.name||'Your Business'}</div><div class="doc-biz-info">${[biz.address,biz.phone,biz.email,biz.website,biz.license].filter(Boolean).join('<br>')}</div></div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <img src="${logoSrc}" style="height:56px;width:auto;object-fit:contain" onerror="this.style.display='none'">
+        <div><div class="doc-biz-name">${biz.name||'Eleven Outdoors'}</div><div class="doc-biz-info">${[biz.address,biz.phone,biz.email,biz.website,biz.license].filter(Boolean).join('<br>')}</div></div>
+      </div>
       <div><div class="doc-type">${type.toUpperCase()}</div><div class="doc-num">#${doc.number}</div></div>
     </div>
     <div class="doc-dates">
@@ -1358,13 +1496,285 @@ function openSettings(){
   $('s-name').value=s.name||'';$('s-email').value=s.email||'';
   $('s-phone').value=s.phone||'';$('s-addr').value=s.address||'';
   $('s-web').value=s.website||'';$('s-lic').value=s.license||'';
+  const prev=$('s-logo-preview');
+  prev.src=s.logo||'./logo.png';prev.style.display='';
   openM('m-settings');
 }
 function saveSettings(){
-  db.settings={name:$('s-name').value.trim(),email:$('s-email').value.trim(),phone:$('s-phone').value.trim(),address:$('s-addr').value.trim(),website:$('s-web').value.trim(),license:$('s-lic').value.trim()};
+  const cur=db.settings.logo;
+  db.settings={name:$('s-name').value.trim(),email:$('s-email').value.trim(),phone:$('s-phone').value.trim(),address:$('s-addr').value.trim(),website:$('s-web').value.trim(),license:$('s-lic').value.trim(),logo:cur||'./logo.png'};
   dbSave();closeM('m-settings');
 }
+function handleLogoUpload(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    db.settings.logo=e.target.result;
+    $('s-logo-preview').src=e.target.result;
+    $('s-logo-preview').style.display='';
+  };
+  reader.readAsDataURL(file);
+}
+function clearLogo(){
+  db.settings.logo='./logo.png';
+  $('s-logo-preview').src='./logo.png';
+}
 $('settings-nav-btn').addEventListener('click',openSettings);
+
+// ═══════════════════════════════════════════════════════════════
+// TIME TRACKING
+// ═══════════════════════════════════════════════════════════════
+function openTimeModal(id){
+  $('m-time-title').textContent=id?'Edit Entry':'Log Time';
+  $('f-tid').value='';$('f-tdate').value=today();
+  const s=$('f-tclient');
+  s.innerHTML='<option value="">No client</option>';
+  db.clients.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name;s.appendChild(o);});
+  if(id){
+    const t=(db.timeEntries||[]).find(x=>x.id===id);if(!t)return;
+    $('f-tid').value=t.id;$('f-tdate').value=t.date;
+    $('f-tclient').value=t.clientId||'';$('f-tdesc').value=t.desc;
+    $('f-thours').value=t.hours;$('f-trate').value=t.rate||'';
+    $('f-tbillable').value=t.billable?'1':'0';
+  }
+  openM('m-time');
+}
+function saveTime(){
+  const id=$('f-tid').value;
+  if(!db.timeEntries)db.timeEntries=[];
+  const t={id:id?parseInt(id):nid('t'),date:$('f-tdate').value,clientId:parseInt($('f-tclient').value)||0,desc:$('f-tdesc').value.trim(),hours:parseFloat($('f-thours').value)||0,rate:parseFloat($('f-trate').value)||0,billable:$('f-tbillable').value==='1'};
+  if(!t.date||!t.desc||!t.hours){alert('Date, description and hours required.');return;}
+  if(id){db.timeEntries[db.timeEntries.findIndex(x=>x.id===parseInt(id))]=t;}
+  else db.timeEntries.push(t);
+  dbSave();closeM('m-time');renderTime();
+}
+function delTime(id){if(!confirm('Delete time entry?'))return;db.timeEntries=(db.timeEntries||[]).filter(t=>t.id!==id);dbSave();renderTime();}
+function timeToggleAll(checked){
+  document.querySelectorAll('.time-chk').forEach(c=>c.checked=checked);
+  updateTimeBillActions();
+}
+function updateTimeBillActions(){
+  const sel=Array.from(document.querySelectorAll('.time-chk:checked')).map(c=>parseInt(c.dataset.id));
+  $('time-bill-actions').innerHTML=sel.length?`<span style="font-size:13px;color:var(--muted)">${sel.length} selected</span><button class="btn btn-success btn-sm" onclick="billTimeToInvoice()">Bill as Invoice</button>`:'';
+}
+function billTimeToInvoice(){
+  const sel=Array.from(document.querySelectorAll('.time-chk:checked')).map(c=>parseInt(c.dataset.id));
+  if(!sel.length)return;
+  const entries=(db.timeEntries||[]).filter(t=>sel.includes(t.id)&&t.billable);
+  if(!entries.length){alert('No billable entries selected.');return;}
+  const clientId=entries[0].clientId;
+  fillCSel('f-iclient');
+  $('f-iid').value='';$('m-inv-title').textContent='Invoice from Time Entries';
+  $('f-idate').value=today();
+  const dd=new Date();dd.setDate(dd.getDate()+30);$('f-idue').value=dd.toISOString().split('T')[0];
+  $('f-inum').value=pad(db.seq.i,'INV');
+  $('f-iclient').value=clientId;
+  $('i-li').innerHTML='';$('i-tax').value=0;
+  entries.forEach(t=>{
+    addLI('i-li','inv');
+    const row=$('i-li').lastElementChild;
+    row.querySelector('.li-d').value=t.desc;
+    row.querySelector('.li-q').value=t.hours;
+    row.querySelector('.li-r').value=t.rate;
+    row.querySelector('.li-a').value=(t.hours*t.rate).toFixed(2);
+  });
+  recalc('i');
+  showSection('invoices');openM('m-inv');
+}
+function renderTime(){
+  if(!db.timeEntries)db.timeEntries=[];
+  const totalH=db.timeEntries.reduce((s,t)=>s+t.hours,0);
+  const totalAmt=db.timeEntries.filter(t=>t.billable).reduce((s,t)=>s+(t.hours*t.rate),0);
+  const unbilled=db.timeEntries.filter(t=>t.billable&&!t.invoiced).reduce((s,t)=>s+(t.hours*t.rate),0);
+  $('time-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total Hours</div><div class="stat-val blue">${totalH.toFixed(1)}h</div></div>
+    <div class="stat-card"><div class="stat-label">Billable Amount</div><div class="stat-val green">${fmt(totalAmt)}</div></div>
+    <div class="stat-card"><div class="stat-label">Unbilled</div><div class="stat-val orange">${fmt(unbilled)}</div></div>
+    <div class="stat-card"><div class="stat-label">Entries</div><div class="stat-val">${db.timeEntries.length}</div></div>`;
+  $('time-bill-actions').innerHTML='';
+  $('time-check-all').checked=false;
+  const tb=$('time-tbody');
+  if(!db.timeEntries.length){tb.innerHTML=`<tr><td colspan="9"><div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><h3>No time entries</h3><p>Start logging your hours</p></div></td></tr>`;return;}
+  tb.innerHTML=[...db.timeEntries].sort((a,b)=>b.date<a.date?-1:1).map(t=>{
+    const c=getC(t.clientId);
+    const amt=t.hours*t.rate;
+    return `<tr>
+      <td><input type="checkbox" class="time-chk" data-id="${t.id}" onchange="updateTimeBillActions()"></td>
+      <td class="td-muted">${fmtD(t.date)}</td>
+      <td>${c.name||'—'}</td>
+      <td>${t.desc}</td>
+      <td class="td-strong">${t.hours}h</td>
+      <td class="td-muted">${t.rate?fmt(t.rate)+'/hr':'—'}</td>
+      <td class="td-strong">${t.rate?fmt(amt):'—'}</td>
+      <td><span class="timer-badge ${t.billable?'billable':'unbillable'}">${t.billable?'Billable':'Internal'}</span></td>
+      <td><div class="row-acts">
+        <button class="ra" onclick="openTimeModal(${t.id})">Edit</button>
+        <button class="ra danger" onclick="delTime(${t.id})">Delete</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RECURRING INVOICES
+// ═══════════════════════════════════════════════════════════════
+const freqLabels={weekly:'Weekly',biweekly:'Every 2 Weeks',monthly:'Monthly',quarterly:'Quarterly',annually:'Annually'};
+function freqDays(f){return{weekly:7,biweekly:14,monthly:30,quarterly:90,annually:365}[f]||30;}
+
+function openRecModal(id){
+  $('m-rec-title').textContent=id?'Edit Recurring':'New Recurring Invoice';
+  $('f-rid').value='';
+  fillCSel('f-rclient');
+  $('f-rnext').value=today();
+  if(id){
+    const r=(db.recurring||[]).find(x=>x.id===id);if(!r)return;
+    $('f-rid').value=r.id;$('f-rclient').value=r.clientId;$('f-ramt').value=r.amount;
+    $('f-rfreq').value=r.freq;$('f-rnext').value=r.next;$('f-rdesc').value=r.desc||'';
+  }
+  openM('m-rec');
+}
+function saveRec(){
+  const id=$('f-rid').value;
+  if(!db.recurring)db.recurring=[];
+  const r={id:id?parseInt(id):nid('r'),clientId:parseInt($('f-rclient').value)||0,amount:parseFloat($('f-ramt').value)||0,freq:$('f-rfreq').value,next:$('f-rnext').value,desc:$('f-rdesc').value.trim(),active:true};
+  if(!r.clientId||!r.amount||!r.next){alert('Client, amount and next date required.');return;}
+  if(id){db.recurring[db.recurring.findIndex(x=>x.id===parseInt(id))]=r;}
+  else db.recurring.push(r);
+  dbSave();closeM('m-rec');renderRecurring();
+}
+function delRec(id){if(!confirm('Delete recurring invoice?'))return;db.recurring=(db.recurring||[]).filter(r=>r.id!==id);dbSave();renderRecurring();}
+function toggleRec(id){const r=(db.recurring||[]).find(x=>x.id===id);if(r){r.active=!r.active;dbSave();renderRecurring();}}
+function generateRecInv(id){
+  const r=(db.recurring||[]).find(x=>x.id===id);if(!r)return;
+  const c=getC(r.clientId);
+  const inv={id:nid('i'),clientId:r.clientId,number:pad(db.seq.i-1,'INV'),date:today(),dueDate:'',items:[{desc:r.desc||'Services',qty:1,rate:r.amount,amount:r.amount}],tax:0,subtotal:r.amount,total:r.amount,notes:'',status:'unpaid'};
+  const dd=new Date();dd.setDate(dd.getDate()+30);inv.dueDate=dd.toISOString().split('T')[0];
+  db.invoices.push(inv);
+  // Advance next due date
+  const next=new Date(r.next);next.setDate(next.getDate()+freqDays(r.freq));
+  r.next=next.toISOString().split('T')[0];
+  dbSave();
+  alert(`Invoice ${inv.number} generated for ${c.name||'client'}!`);
+  renderRecurring();
+}
+function renderRecurring(){
+  if(!db.recurring)db.recurring=[];
+  const tb=$('rec-tbody');
+  if(!db.recurring.length){tb.innerHTML=`<tr><td colspan="6"><div class="empty" style="padding:32px"><h3>No recurring invoices</h3><p>Set up automatic repeating invoices for regular clients</p><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="openRecModal()">+ New Recurring Invoice</button></div></td></tr>`;return;}
+  tb.innerHTML=db.recurring.map(r=>{
+    const c=getC(r.clientId);
+    const isdue=r.next&&r.next<=today();
+    return `<tr>
+      <td class="td-strong">${c.name||'—'}</td>
+      <td class="td-strong">${fmt(r.amount)}</td>
+      <td>${freqLabels[r.freq]||r.freq}</td>
+      <td class="${isdue?'txt-danger td-strong':''}">${fmtD(r.next)}${isdue?' ⚠️ Due':''}</td>
+      <td><span class="rec-badge ${r.active?'active':'paused'}">${r.active?'Active':'Paused'}</span></td>
+      <td><div class="row-acts">
+        ${r.active&&isdue?`<button class="ra success" onclick="generateRecInv(${r.id})">Generate Invoice</button>`:''}
+        <button class="ra" onclick="openRecModal(${r.id})">Edit</button>
+        <button class="ra" onclick="toggleRec(${r.id})">${r.active?'Pause':'Resume'}</button>
+        <button class="ra danger" onclick="delRec(${r.id})">Delete</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  // Also add a "+ New Recurring" button at top
+  $('inv-main-card').querySelector('.filter-bar').querySelector('.ftab[onclick*="recurring"]').innerHTML=`Recurring<span class="ftab-count">${db.recurring.length}</span>`;
+}
+
+// Topbar action for recurring
+function invTopbarAction(){
+  if(_invTab==='recurring') return `<button class="btn btn-ghost btn-sm" onclick="openRecModal()">+ New Recurring</button><button class="btn btn-primary btn-sm" onclick="openInvModal()">New Invoice</button>`;
+  return `<button class="btn btn-primary btn-sm" onclick="openInvModal()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Invoice</button>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REPORTS
+// ═══════════════════════════════════════════════════════════════
+function renderReports(){
+  // Populate year selector
+  const years=new Set();
+  const curYear=new Date().getFullYear();
+  [curYear-1,curYear,curYear+1].forEach(y=>years.add(y));
+  [...db.invoices,...db.expenses].forEach(x=>{if(x.date)years.add(parseInt(x.date.split('-')[0]));});
+  const sel=$('rpt-year');
+  const prev=sel.value||String(curYear);
+  sel.innerHTML=[...years].sort((a,b)=>b-a).map(y=>`<option value="${y}"${y==prev?' selected':''}>${y}</option>`).join('');
+  const year=parseInt(sel.value);
+
+  // Top stats
+  const paidInvs=db.invoices.filter(i=>i.status==='paid'&&i.date&&i.date.startsWith(year));
+  const revenue=paidInvs.reduce((s,i)=>s+i.total,0);
+  const expenses=db.expenses.filter(e=>e.date&&e.date.startsWith(year)).reduce((s,e)=>s+e.amount,0);
+  const payroll=db.payments.filter(p=>p.date&&p.date.startsWith(year)).reduce((s,p)=>s+p.amount,0);
+  const profit=revenue-expenses-payroll;
+  $('rpt-top-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Revenue ${year}</div><div class="stat-val green">${fmt(revenue)}</div></div>
+    <div class="stat-card"><div class="stat-label">Total Expenses</div><div class="stat-val red">${fmt(expenses+payroll)}</div></div>
+    <div class="stat-card"><div class="stat-label">Net Profit</div><div class="stat-val ${profit>=0?'green':'red'}">${fmt(profit)}</div></div>`;
+
+  // P&L by month
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let plRows='<thead><tr><th>Month</th><th style="text-align:right;color:var(--success)">Revenue</th><th style="text-align:right;color:var(--danger)">Expenses</th><th style="text-align:right;color:var(--warn)">Payroll</th><th style="text-align:right">Net Profit</th></tr></thead><tbody>';
+  let totR=0,totE=0,totP=0;
+  for(let m=0;m<12;m++){
+    const mStr=`${year}-${String(m+1).padStart(2,'0')}`;
+    const r=db.invoices.filter(i=>i.status==='paid'&&i.date&&i.date.startsWith(mStr)).reduce((s,i)=>s+i.total,0);
+    const e=db.expenses.filter(x=>x.date&&x.date.startsWith(mStr)).reduce((s,x)=>s+x.amount,0);
+    const p=db.payments.filter(x=>x.date&&x.date.startsWith(mStr)).reduce((s,x)=>s+x.amount,0);
+    const net=r-e-p;
+    totR+=r;totE+=e;totP+=p;
+    if(r||e||p) plRows+=`<tr><td>${months[m]}</td><td style="text-align:right;color:var(--success)">${fmt(r)}</td><td style="text-align:right;color:var(--danger)">${fmt(e)}</td><td style="text-align:right;color:var(--warn)">${fmt(p)}</td><td style="text-align:right;font-weight:600;color:${net>=0?'var(--success)':'var(--danger)'}">${fmt(net)}</td></tr>`;
+  }
+  plRows+=`</tbody><tfoot><tr class="pl-total"><td>Total</td><td style="text-align:right;color:var(--success)">${fmt(totR)}</td><td style="text-align:right;color:var(--danger)">${fmt(totE)}</td><td style="text-align:right;color:var(--warn)">${fmt(totP)}</td><td style="text-align:right;color:${(totR-totE-totP)>=0?'var(--success)':'var(--danger)'}">${fmt(totR-totE-totP)}</td></tr></tfoot>`;
+  $('rpt-pl-table').innerHTML=plRows;
+
+  // Revenue by client
+  const clientRev={};
+  db.invoices.filter(i=>i.status==='paid'&&i.date&&i.date.startsWith(year)).forEach(i=>{
+    clientRev[i.clientId]=(clientRev[i.clientId]||0)+i.total;
+  });
+  const sortedClients=Object.entries(clientRev).sort((a,b)=>b[1]-a[1]);
+  const maxRev=sortedClients[0]?.[1]||1;
+  $('rpt-clients').innerHTML=sortedClients.length?sortedClients.map(([cid,rev])=>{
+    const c=getC(parseInt(cid));
+    const bg=avatarColor(c.name||'?');
+    return `<div class="client-rev-row">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div style="width:26px;height:26px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff">${initials(c.name||'?')}</div>
+        <div>
+          <div style="font-size:13px;font-weight:500">${c.name||'—'}</div>
+          <div style="width:${Math.round(rev/maxRev*120)}px;height:4px;background:var(--success);border-radius:2px;margin-top:3px"></div>
+        </div>
+      </div>
+      <strong style="color:var(--success)">${fmt(rev)}</strong>
+    </div>`;
+  }).join(''):`<div class="cal-empty">No paid invoices for ${year}</div>`;
+
+  // Expenses by category
+  const catTotals={};
+  db.expenses.filter(e=>e.date&&e.date.startsWith(year)).forEach(e=>{catTotals[e.cat]=(catTotals[e.cat]||0)+e.amount;});
+  const sortedCats=Object.entries(catTotals).sort((a,b)=>b[1]-a[1]);
+  const maxCat=sortedCats[0]?.[1]||1;
+  $('rpt-exp-cats').innerHTML=sortedCats.length?sortedCats.map(([cat,amt])=>`
+    <div class="client-rev-row">
+      <div>
+        <div style="font-size:13px;font-weight:500">${cat}</div>
+        <div style="width:${Math.round(amt/maxCat*120)}px;height:4px;background:var(--danger);border-radius:2px;margin-top:3px"></div>
+      </div>
+      <strong style="color:var(--danger)">${fmt(amt)}</strong>
+    </div>`).join(''):`<div class="cal-empty">No expenses for ${year}</div>`;
+
+  // Tax summary
+  const taxInvs=db.invoices.filter(i=>i.status==='paid'&&i.tax&&i.date&&i.date.startsWith(year));
+  const totalTax=taxInvs.reduce((s,i)=>s+(i.subtotal*i.tax/100),0);
+  $('rpt-tax').innerHTML=taxInvs.length?`
+    <div style="display:flex;gap:24px;flex-wrap:wrap">
+      <div class="stat-card" style="flex:1"><div class="stat-label">Tax Collected</div><div class="stat-val orange">${fmt(totalTax)}</div></div>
+      <div class="stat-card" style="flex:1"><div class="stat-label">Taxable Invoices</div><div class="stat-val">${taxInvs.length}</div></div>
+      <div class="stat-card" style="flex:1"><div class="stat-label">Avg Tax Rate</div><div class="stat-val">${(taxInvs.reduce((s,i)=>s+i.tax,0)/taxInvs.length).toFixed(1)}%</div></div>
+    </div>`:`<div style="color:var(--muted);font-size:13.5px">No taxable invoices for ${year}.</div>`;
+}
 
 // ═══════════════════════════════════════════════════════════════
 // CALENDAR
